@@ -102,15 +102,41 @@
       padding: 0.8rem;
       text-align: center;
       font-weight: bold;
-      margin: 5px auto -70px;
+      margin: 5px auto 5px;
       font-size: 1rem;
       width: 250px;
+    }
+
+    /* Cupom */
+    .cupom {
+      background-color: #fff6ec;
+      border: 2px dashed #c94c29;
+      border-radius: 8px;
+      padding: 0.8rem;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #a8432a;
+      font-weight: bold;
+      margin: 10px auto;
+      width: 250px;
+      display: none;
+    }
+
+    .cupom select {
+      margin-top: 5px;
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #c94c29;
+      width: 100%;
+      font-size: 0.9rem;
+      background: #fff1e0;
+      color: #6b1e16;
     }
 
     /* Botão finalizar compra */
     #finalizar-compra {
       display: none;
-      margin: 90px auto;
+      margin: 20px auto 90px;
       width: 265px;
       padding: 0.9rem;
       font-size: 1rem;
@@ -196,11 +222,10 @@
     <div class="select-right" id="contador-selecionados">Selecionados: 0</div>
   </div>
 
-  <main id="carrinho-container">
-    <!-- Itens do carrinho serão inseridos aqui -->
-  </main>
+  <main id="carrinho-container"></main>
 
   <div class="total" id="total-geral">Total: R$ 0,00</div>
+  <div class="cupom" id="cupom-box"></div>
 
   <button id="finalizar-compra" onclick="finalizarCompra()">Comprar</button>
 
@@ -215,6 +240,8 @@
   </footer>
 
   <script>
+    let cupomSelecionado = 0;
+
     function carregarCarrinho() {
       const carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
       const container = document.getElementById('carrinho-container');
@@ -262,7 +289,46 @@
         }
       });
 
-      document.getElementById('total-geral').textContent = `Total: R$ ${total.toFixed(2).replace('.', ',')}`;
+      aplicarCupom(total, selecionados);
+    }
+
+    function aplicarCupom(total, selecionados) {
+      const cupomBox = document.getElementById("cupom-box");
+      let opcoes = [];
+
+      if (total >= 200) {
+        opcoes.push({ codigo: "20OFF", desconto: 20 });
+      } else if (total >= 100) {
+        opcoes.push({ codigo: "10OFF", desconto: 10 });
+      } else if (total >= 50) {
+        opcoes.push({ codigo: "5OFF", desconto: 5 });
+      }
+
+      if (opcoes.length > 0) {
+        let html = "🎉 Cupom disponível:<br><select id='select-cupom'><option value='0'>-- Nenhum --</option>";
+        opcoes.forEach(c => {
+          html += `<option value="${c.desconto}">${c.codigo} (${c.desconto}% off)</option>`;
+        });
+        html += "</select>";
+        cupomBox.innerHTML = html;
+        cupomBox.style.display = "block";
+
+        document.getElementById("select-cupom").addEventListener("change", function() {
+          cupomSelecionado = parseInt(this.value);
+          atualizarTotal();
+        });
+      } else {
+        cupomSelecionado = 0;
+        cupomBox.style.display = "none";
+      }
+
+      // aplica desconto
+      let totalFinal = total;
+      if (cupomSelecionado > 0) {
+        totalFinal = total - (total * cupomSelecionado / 100);
+      }
+
+      document.getElementById('total-geral').textContent = `Total: R$ ${totalFinal.toFixed(2).replace('.', ',')}`;
       document.getElementById("contador-selecionados").textContent = `Selecionados: ${selecionados}`;
     }
 
